@@ -1,6 +1,7 @@
 local cmp = require('cmp')
 local api = vim.api
 local conf = require('cmp_ai.config')
+local utils = require('cmp_ai.utils')
 
 local Source = {}
 function Source:new(o)
@@ -52,7 +53,14 @@ function Source:complete(ctx, callback)
     callback()
     return
   end
-  self:_do_complete(ctx, callback)
+  
+  -- Generate a unique key for this buffer
+  local debounce_key = string.format('cmp_ai_debounce_%d', api.nvim_get_current_buf())
+  
+  -- Wrap the completion call in a debounce
+  utils.debounce(debounce_key, function()
+    self:_do_complete(ctx, callback)
+  end, conf:get('debounce_ms'))
 end
 
 function Source:end_complete(data, ctx, cb)
